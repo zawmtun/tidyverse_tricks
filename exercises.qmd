@@ -21,13 +21,14 @@ library(fuzzyjoin)
 
 ```{r}
 num <- c("a", "b", "c", "d")
+num
 enframe(num)
 ```
 
 ## Named vectors are more useful
 
 ```{r}
-names(num) <- c("a", "b", "c", "d")
+names(num) <- c("x", "y", "z", "e")
 enframe(num)
 enframe(num, name = "letter", value = "number")
 ```
@@ -76,11 +77,12 @@ penguins |> count(species)
 
 ```{r}
 penguins |> 
-  group_by(species) |> 
+  group_by(island) |> 
   summarise(total_weight_g = sum(body_mass_g, na.rm = TRUE),
             .groups = "drop")
 
-penguins |> count(species, wt = body_mass_g, name = "total_weight_g")
+penguins |> count(island, wt = body_mass_g)
+penguins |> count(island, wt = body_mass_g, name = "total_weight_g")
 ```
 
 ## Count the missing values
@@ -311,6 +313,7 @@ print(new, n = 25)
 
 ```{r}
 v <- 1:4
+v
 sum(v)
 
 1 + 2 + 3 + 4
@@ -327,6 +330,7 @@ age_cm
 bmi
 
 l <- list(gender, age_cm, bmi)
+l
 
 l |> reduce(left_join, by = "id")
 ```
@@ -384,6 +388,7 @@ dat2 <- tibble(
 ```{r}
 dat1
 dat2
+library(fuzzyjoin)
 
 dat_join <- stringdist_full_join(
   dat1, dat2,
