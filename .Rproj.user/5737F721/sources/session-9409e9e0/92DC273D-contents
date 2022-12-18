@@ -82,6 +82,13 @@ penguins |>
 penguins |> count(species, wt = body_mass_g, name = "total_weight_g")
 ```
 
+## Count the missing values
+
+```{r}
+penguins |> count(is.na(sex))
+```
+
+
 ## Add a column of counts
 
 ```{r}
