@@ -262,7 +262,7 @@ dat
 dat |> pull(mod)
 ```
 
-# 5. separate()
+# 5. Separate a column into pieces
 
 ## Prepare data
 
@@ -308,6 +308,14 @@ print(new, n = 25)
 ```
 
 # 6. reduce() them to one
+
+```{r}
+v <- 1:4
+sum(v)
+
+1 + 2 + 3 + 4
+reduce(v, `+`)
+```
 
 ```{r}
 gender <- tibble(id = letters[1:6], gender = sample(c("M", "F"), 6, TRUE))
