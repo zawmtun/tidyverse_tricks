@@ -1,0 +1,25 @@
+library(tidyverse)
+library(palmerpenguins)
+
+who
+
+# Counting ----
+count(), add_count(), uncount()
+
+
+enframe(), deframe()
+
+across()
+
+
+separate(), separate_rows()
+lead(), lag()
+
+list columns - summarise() and mutate()
+nest_by()
+pull()
+crossing()
+fct_lump()
+fct_reorder() + geom_col()
+
+select() table() epi2by2()

@@ -1,0 +1,423 @@
+---
+title: "10 Handy Tidyverse Tricks"
+format: html
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+library(epiR)
+library(broom)
+library(medicaldata)
+```
+
+# 1. Putting it all in a frame
+
+## Convert a vector to a dataframe
+
+```{r}
+num <- 1:4
+enframe(num)
+```
+
+## Named vectors are more useful
+
+```{r}
+names(num) <- c("a", "b", "c", "d")
+enframe(num)
+enframe(num, name = "letter", value = "number")
+```
+
+## A list column with dataframes
+
+```{r}
+dat1 <- mtcars
+dat2 <- iris
+dat3 <- penguins
+
+l <- list(dat1, dat2, dat3)
+names(l) <- c("mtcars", "iris", "penguins")
+
+dat_l <- enframe(l, name = "data_name", "dataset")
+dat_l
+View(dat_l)
+deframe(dat_l)
+```
+
+## A list column with lists
+
+```{r}
+dat <- penguins |> 
+  select(bill_length_mm, bill_depth_mm, body_mass_g) |> 
+  map(summary)
+
+dat |> class()
+length(dat)
+enframe(dat) 
+```
+
+# 2. Counting
+
+## Number of rows
+
+```{r}
+penguins |> 
+  group_by(species) |> 
+  summarise(n = n(), .groups = "drop")
+
+penguins |> count(species)
+```
+
+## Take the sum
+
+```{r}
+penguins |> 
+  group_by(species) |> 
+  summarise(total_weight_g = sum(body_mass_g, na.rm = TRUE),
+            .groups = "drop")
+
+penguins |> count(species, wt = body_mass_g, name = "total_weight_g")
+```
+
+## Add a column of counts
+
+```{r}
+dat <- penguins |> 
+  group_by(species) |> 
+  mutate(n = n()) |> 
+  ungroup()
+
+View(dat)
+
+dat1 <- penguins |> 
+  add_count(species)
+
+View(dat1)
+```
+
+# 3. Operate across() many columns
+
+## mutate() to modify an existing column
+
+Form 1
+
+```{r}
+dat <- penguins |> 
+  mutate(
+    across(bill_length_mm:body_mass_g,
+           replace_na, 0),
+    sex = fct_explicit_na(sex, na_level = "Unknown")
+  )
+
+View(dat)
+```
+
+Form 2
+
+```{r}
+dat <- penguins |> 
+  mutate(
+    across(bill_length_mm:body_mass_g,
+           ~ replace_na(., 0)),
+    sex = fct_explicit_na(sex, na_level = "Unknown")
+  )
+
+dat
+```
+
+## mutate() to create new columns
+
+Form 1
+
+```{r}
+dat <- penguins |> 
+  mutate(
+    across(bill_length_mm:body_mass_g,
+           list(new = replace_na), 0),
+    sex = fct_explicit_na(sex, na_level = "Unknown")
+  )
+
+View(dat)
+```
+
+Form 2
+
+```{r}
+dat <- penguins |> 
+  mutate(
+    across(bill_length_mm:body_mass_g,
+           list(new = ~ replace_na(., 0))),
+    sex = fct_explicit_na(sex, na_level = "Unknown")
+  )
+
+View(dat)
+```
+
+## summarise() to aggregate columns
+
+Form 1: use the same column names
+
+```{r}
+dat1 <- penguins |> 
+  group_by(species, island) |> 
+  summarise(
+    across(bill_length_mm:body_mass_g,
+           mean, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+dat1
+```
+
+Form 1: modify column names
+
+```{r}
+dat1 <- penguins |> 
+  group_by(species, island) |> 
+  summarise(
+    across(bill_length_mm:body_mass_g,
+           list(new = mean), na.rm = TRUE),
+    .groups = "drop"
+  )
+
+dat1
+```
+
+Form 2: use the same column names
+
+```{r}
+dat1 <- penguins |> 
+  group_by(species, island) |> 
+  summarise(
+    across(bill_length_mm:body_mass_g,
+           ~ mean(., na.rm = TRUE)),
+    .groups = "drop"
+  )
+
+dat1
+```
+
+Form 2: use the same column names
+
+```{r}
+dat1 <- penguins |> 
+  group_by(species, island) |> 
+  summarise(
+    across(bill_length_mm:body_mass_g,
+           list(new = ~ mean(., na.rm = TRUE))),
+    .groups = "drop"
+  )
+
+dat1
+```
+
+# 4. List columns are awesome!
+
+Form 1
+
+```{r}
+dat <- penguins |> 
+  group_by(species) |> 
+  nest() |> 
+  rowwise() |> 
+  mutate(
+    mod = list(
+      lm(body_mass_g ~ sex, data = data)
+    ),
+    pred = list(predict(mod))
+  ) |> 
+  ungroup()
+
+dat
+
+dat |> pull(mod)
+```
+
+Form 2
+
+```{r}
+dat <- penguins |> 
+  nest_by(species) |> 
+  mutate(
+    mod = list(
+      lm(body_mass_g ~ sex, data = data)
+    ),
+    pred = list(predict(mod))
+  ) |> 
+  ungroup()
+
+dat
+
+dat |> pull(mod)
+```
+
+# 6. separate()
+
+## Prepare data
+
+```{r}
+dat <- tibble(
+  name = paste(letters[1:6], letters[5:10], letters[11:16], letters[21:26], sep = "-"),
+  value = 1:6
+)
+
+dat
+```
+
+## separate() into multiple columns
+
+```{r}
+dat |> 
+  separate(col = name,
+           into = c("first", "second", "third", "fourth"),
+           sep = "-")
+
+dat |> 
+  separate(col = name,
+           into = c("first", "second"),
+           sep = "-",
+           extra = "merge")
+
+dat |> 
+  separate(col = name,
+           into = c("first", "second", "third"),
+           sep = "-",
+           extra = "merge")
+```
+
+## separate_rows() into multiple rows
+
+```{r}
+dat
+
+new <- dat |> 
+  separate_rows(name, sep = "-")
+
+print(new, n = 25)
+```
+
+# 7. reduce() them to one
+
+```{r}
+gender <- tibble(id = letters[1:6], gender = sample(c("M", "F"), 6, TRUE))
+age_cm <- tibble(id = letters[1:6], age = runif(6, min = 150, max = 190))
+bmi <- tibble(id = letters[1:6], bmi = runif(6, min = 15, max = 40))
+
+gender
+age_cm
+bmi
+
+l <- list(gender, age_cm, bmi)
+
+l |> reduce(left_join, by = "id")
+```
+
+# 8. Permutations
+
+```{r}
+regimen <- LETTERS[1:5]
+gender <- c("M", "F")
+color <- c("red", "green", "blue")
+
+dat1 <- crossing(regimen, gender)
+print(dat1)
+
+dat2 <- crossing(regimen, gender, color)
+print(dat2, n = 30)
+
+# Base version
+expand.grid(regimen, gender)
+expand.grid(regimen, gender, color)
+```
+
+# 9. One two punch
+
+## Prepare data
+
+```{r}
+dat <- medicaldata::cytomegalovirus
+glimpse(dat)
+
+dat1 <- dat |> 
+  mutate(
+    across(c(cmv, prior.transplant), ~ if_else(. == 0, 2, .))
+  ) |> 
+  rename(tp = prior.transplant)
+```
+
+## Base R approach
+
+```{r}
+(data_table <- table(dat1$tp, dat1$cmv))
+res <- epi.2by2(data_table)
+res
+
+res_sum <- summary(res)
+res_sum$massoc.detail$RR.strata.wald
+```
+
+## Tidy approach
+
+```{r}
+data_table <- dat1 |> 
+  select(tp, cmv) |> 
+  table()
+
+data_table
+
+dat1 |> 
+  select(tp, cmv) |> 
+  table() |> 
+  epi.2by2() |> 
+  tidy() |> 
+  filter(str_detect(term, "^RR"))
+```
+
+# 10. Visualising categoricla variables
+
+## Prepare data
+
+```{r}
+dat <- ggplot2::mpg
+glimpse(dat)
+dat |> count(manufacturer)
+```
+
+## Plot all manufacturers
+
+```{r}
+dat_count <- dat1 |> 
+  count(manu)
+
+ggplot(dat_count, aes(x = n, y = manu)) +
+  geom_col() +
+  theme_light()
+```
+
+## Lump small groups together
+
+```{r}
+dat2 <- dat |> 
+  mutate(
+    manu = factor(manufacturer),
+    manu = fct_lump_n(manu, 5)
+  )
+
+dat_count <- dat2 |> 
+  count(manu)
+
+ggplot(dat_count, aes(x = n, y = manu)) +
+  geom_col() +
+  theme_light()
+
+ggplot(dat_count, aes(x = n, y = fct_reorder(manu, n))) +
+  geom_col() +
+  theme_light()
+
+ggplot(dat_count, aes(x = n, y = fct_reorder(manu, n, .desc = TRUE))) +
+  geom_col() +
+  theme_light()
+```

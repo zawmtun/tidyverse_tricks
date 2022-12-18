@@ -1,0 +1,131 @@
+---
+title: "10 Handy Tidyverse Tricks"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+library(tidyverse)
+library(palmerpenguins)
+```
+
+# 1. Putting it in a frame
+
+## Convert a vector to a dataframe
+
+```{r}
+num <- 1:4
+enframe(num)
+```
+
+## Named vectors are more useful
+
+```{r}
+names(num) <- c("a", "b", "c", "d")
+enframe(num)
+enframe(num, name = "letter", value = "number")
+```
+
+## A list column with dataframes
+
+```{r}
+dat1 <- mtcars
+dat2 <- iris
+dat3 <- penguins
+
+l <- list(dat1, dat2, dat3)
+names(l) <- c("mtcars", "iris", "penguins")
+
+dat_l <- enframe(l, name = "data_name", "dataset")
+dat_l
+View(dat_l)
+deframe(dat_l)
+```
+
+## A list column with lists
+
+```{r}
+dat <- penguins |> 
+  select(bill_length_mm, bill_depth_mm, body_mass_g) |> 
+  map(summary)
+
+dat |> class()
+length(dat)
+enframe(dat) 
+```
+
+# 2. Counting
+
+```{r}
+
+penguins |> 
+  group_by(species) |> 
+  summarise(n = n(), .groups = "drop")
+
+penguins |> count(species)
+
+penguins |> 
+  group_by(species) |> 
+  summarise(total_weight = sum(body_mass_g, na.rm = TRUE),
+            .groups = "drop")
+
+
+  
+
+
+count(), add_count()
+```
+
+# 3. mutate() and summarise() across() multiple columns
+
+```{r}
+across()
+```
+
+# 4. List columns are awesome
+
+```{r}
+list columns - summarise() and mutate()
+nest_by()
+```
+
+# 5. rowwise() processing
+
+```{r}
+rowwise()
+```
+
+# 6. separate()
+
+```{r}
+separate(), separate_rows()
+```
+
+# 7. reduce() them to one
+
+```{r}
+
+```
+
+# 7. Permutations
+
+```{r}
+crossing()
+
+```
+
+# 8. One two punch
+
+```{r}
+select() table() epi2by2()
+```
+
+# 9. Visualising categoricla variables
+
+```{r}
+fct_lump()
+fct_reorder() + geom_col()
+
+```
