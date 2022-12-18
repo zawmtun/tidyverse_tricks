@@ -12,6 +12,7 @@ library(palmerpenguins)
 library(epiR)
 library(broom)
 library(medicaldata)
+library(fuzzyjoin)
 ```
 
 # 1. Putting it all in a frame
@@ -261,7 +262,7 @@ dat
 dat |> pull(mod)
 ```
 
-# 6. separate()
+# 5. separate()
 
 ## Prepare data
 
@@ -306,7 +307,7 @@ new <- dat |>
 print(new, n = 25)
 ```
 
-# 7. reduce() them to one
+# 6. reduce() them to one
 
 ```{r}
 gender <- tibble(id = letters[1:6], gender = sample(c("M", "F"), 6, TRUE))
@@ -320,6 +321,74 @@ bmi
 l <- list(gender, age_cm, bmi)
 
 l |> reduce(left_join, by = "id")
+```
+
+# 7. Fuzzy join
+
+## Prepare data
+
+```{r}
+dat1 <- tibble(
+  district = c("Aberdeen City", "Aberdeenshire", 
+               "Abertawe - Swansea", "Adur District", "Allerdale District (B)", 
+               "Amber Valley District (B)", "Angus", "Argyll and Bute", "Arun District", 
+               "Ashfield District", "Ashford District (B)", "Babergh District", 
+               "Barking and Dagenham London Boro", "Barnet London Boro", "Barnsley District (B)",
+                "Barrow-in-Furness District (B)", "Basildon District (B)",
+               "Basingstoke and Deane District (B)", 
+               "Bassetlaw District", "Bath and North East Somerset", "Bedford (B)", 
+               "Bexley London Boro", "Birmingham District (B)", "Blaby District", 
+               "Blackburn with Darwen (B)", "Blackpool (B)", "Blaenau Gwent - Blaenau Gwent", 
+               "Bolsover District", "Bolton District (B)", "Boston District (B)", 
+               "Bournemouth, Christchurch and Poole", "Bracknell Forest (B)", 
+               "Bradford District (B)", "Braintree District", "Breckland District", 
+               "Brent London Boro", "Brentwood District (B)",
+               "Bro Morgannwg - the Vale of Glamorgan", 
+               "Broadland District", "Bromley London Boro"),
+  pop1 = c(8L,  2L, 14L, 14L, 14L, 14L, 3L, 5L, 14L, 14L, 14L, 14L, 14L, 14L, 
+          14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 
+          14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L, 14L)
+)
+
+dat2 <- tibble(
+  district = c("Adur", "Allerdale", "Amber Valley", 
+               "Arun", "Ashfield", "Ashford", "Babergh", "Barking and Dagenham", 
+               "Barnet", "Barnsley", "Barrow-in-Furness", "Basildon", "Basingstoke and Deane", 
+               "Bassetlaw", "Bath and North East Somerset", "Bedford", "Bexley", 
+               "Birmingham", "Blaby", "Blackburn with Darwen", "Blackpool", 
+               "Blaenau Gwent", "Bolsover", "Bolton", "Boston",
+               "Bournemouth, Christchurch and Poole", 
+               "Bracknell Forest", "Bradford", "Braintree", "Breckland", "Brent", 
+               "Brentwood", "Bridgend", "Brighton and Hove", "Bristol, City of", 
+               "Broadland", "Bromley", "Bromsgrove", "Broxbourne", "Broxtowe"
+  ),
+  pop2 = c(63869, 97527, 126678, 159827, 127151, 
+          129281, 91401, 211998, 392140, 245199, 67137, 185862, 175729, 
+          116839, 192106, 171623, 247258, 1141374, 100421, 148942, 139305, 
+          69713, 79530, 285372, 69366, 395784, 121676, 537173, 151561, 
+          139329, 330795, 76550, 144876, 290395, 463405, 129464, 331096, 
+          98662, 96876, 113272)
+)
+```
+
+## Join data
+
+```{r}
+dat1
+dat2
+
+dat_join <- stringdist_full_join(
+  dat1, dat2,
+  by = "district",
+  method = "jw", distance_col = "dist"
+) |> 
+  arrange(district.x, dist) |> 
+  group_by(district.x) |> 
+  slice(1) |> 
+  ungroup() |> 
+  mutate(district.y = if_else(dist < 0.25, district.y, NA_character_)) 
+
+dat_join
 ```
 
 # 8. Permutations
