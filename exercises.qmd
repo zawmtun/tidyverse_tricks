@@ -20,7 +20,7 @@ library(fuzzyjoin)
 ## Convert a vector to a dataframe
 
 ```{r}
-num <- 1:4
+num <- c("a", "b", "c", "d")
 enframe(num)
 ```
 
