@@ -388,16 +388,21 @@ dat1 |>
 ## Prepare data
 
 ```{r}
-dat <- ggplot2::mpg
+dat <- ggplot2::mpg |> 
+  rename(manu = manufacturer)
+
 glimpse(dat)
-dat |> count(manufacturer)
+
+dat |> count(manu)
 ```
 
 ## Plot all manufacturers
 
 ```{r}
-dat_count <- dat1 |> 
+dat_count <- dat |> 
   count(manu)
+
+dat_count
 
 ggplot(dat_count, aes(x = n, y = manu)) +
   geom_col() +
@@ -407,13 +412,13 @@ ggplot(dat_count, aes(x = n, y = manu)) +
 ## Lump small groups together
 
 ```{r}
-dat2 <- dat |> 
+dat1 <- dat |> 
   mutate(
-    manu = factor(manufacturer),
+    manu = factor(manu),
     manu = fct_lump_n(manu, 5)
   )
 
-dat_count <- dat2 |> 
+dat_count <- dat1 |> 
   count(manu)
 
 ggplot(dat_count, aes(x = n, y = manu)) +
